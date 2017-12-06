@@ -18,7 +18,6 @@ RUN make
 RUN make install
 # Added LD_LIBRARY_PATH as was seeing errors relating to libgnc-qof.so.1
 ENV LD_LIBRARY_PATH /usr/local/lib:/usr/lib:/lib
-ADD gnucash.gnucash /gnucash.gnucash
 
 WORKDIR /var/www
 RUN git clone https://github.com/loftx/gnucash-rest.git
@@ -30,6 +29,8 @@ ADD gnucash_rest.wsgi /var/www/gnucash-rest
 RUN useradd wsgi
 RUN mkdir /home/wsgi
 RUN chown wsgi:wsgi /home/wsgi
+
+ADD gnucash.gnucash /home/wsgi/gnucash.gnucash
 
 RUN service apache2 restart
 

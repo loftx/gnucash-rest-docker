@@ -12,5 +12,5 @@ sys.path.insert(0,"/var/www/gnucash-rest")
 from gnucash_rest import app as application
 
 # Set variables
-application.connection_string = '/gnucash.gnucash'
+application.connection_string = '/home/wsgi/gnucash.gnucash'
 
