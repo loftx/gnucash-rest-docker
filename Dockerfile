@@ -2,43 +2,62 @@ FROM ubuntu:16.04
 MAINTAINER dev@loftx.co.uk
 
 RUN apt-get update
+
+# Set default MySQL root password for use as test database
+RUN apt-get install -y debconf-utils
+RUN echo mysql-server-5.7 mysql-server/root_password password oxford | debconf-set-selections
+RUN echo mysql-server-5.7 mysql-server/root_password_again password oxford | debconf-set-selections
+
+# Install GnuCash dependancies including MySQL and python
 RUN apt-get install -y intltool autoconf automake autotools-dev libsigsegv2 m4 libtool libltdl-dev libglib2.0-dev icu-devtools libicu-dev libboost-all-dev guile-2.0 guile-2.0-dev swig2.0 libxml++2.6-dev libxslt1-dev xsltproc libgtest-dev google-mock gtk+3.0 libgtk-3-dev libwebkit2gtk-4.0-37 libwebkit2gtk-4.0-dev cmake libdbi-dev libdbd-mysql libxml2-utils
-RUN apt-get install -y python-pip dbus git apache2 libapache2-mod-wsgi python-dev
+
+# Install WSGI/Flask dependencies and Flask
+RUN apt-get install -y python-pip dbus git apache2 libapache2-mod-wsgi python-dev python-mysqldb
 RUN pip install Flask
 
-# Avoid 'fatal: unable to auto-detect email address' error
+# Install MySQL server for tests
+RUN apt-get install -y mysql-server 
+
+# Avoid 'fatal: unable to auto-detect email address' error from git
 RUN git config --global user.email "unused@example.com"
 RUN git config --global user.name "Unused"
 RUN git clone https://github.com/Gnucash/gnucash.git
 
+# Checkout Gnucash 2.7.5
 WORKDIR /gnucash
-#RUN git fetch origin 2.7.5
-#RUN git checkout tags/2.7.5 
+RUN git fetch origin 2.7.5
+RUN git checkout tags/2.7.5 
 
-# Move this with the rest of the installs if required - error seems to go away with this?
-RUN apt-get install libmysqlclient-dev
-
-RUN cmake -D CMAKE_INSTALL_PREFIX=/opt/gnucash-devel -D WITH_AQBANKING=OFF -D WITH_OFX=OFF -D WITH_PYTHON=ON .
+# Build Gnucash with Python bindings
+RUN cmake -D WITH_AQBANKING=OFF -D WITH_OFX=OFF -D WITH_PYTHON=ON .
 RUN make
-RUN make install
 
+# 'make install' is not run as the following error occurs if /gnucash isn't the working directory
+# WARN <gnc.engine> failed to load gncmod-backend-dbi from relative path dbi
+# CRIT <gnc.engine> required library gncmod-backend-dbi not found.
+# WARN <gnc.engine> failed to load gncmod-backend-xml from relative path xml
+# CRIT <gnc.engine> required library gncmod-backend-xml not found.
+
+# Checkout Gnucash Rest API
 WORKDIR /var/www
 RUN git clone https://github.com/loftx/gnucash-rest.git
 
+# Add WSGI config to Apache config
 ADD 000-default.conf /etc/apache2/sites-available 
 
-ADD gnucash_rest.wsgi /var/www/gnucash-rest
-
+# Set WSGI requirements 
 RUN useradd wsgi
 RUN mkdir /home/wsgi
 RUN chown wsgi:wsgi /home/wsgi
 
+# Create test database
 ADD gnucash.gnucash /home/wsgi/gnucash.gnucash
 
-# Add link in main python directory
-RUN ln -s /gnucash/lib/python2.7/site-packages/gnucash /usr/lib/python2.7/gnucash
+# Add link in main python directory so gnucash can be imported
+RUN ln -s /gnucash/lib/python2.7/dist-packages/gnucash /usr/lib/python2.7/gnucash
 
-RUN service apache2 restart
+# Add link in main python directory so gnucash_rest can be imported 
+RUN ln -s /var/www/gnucash-rest/gnucash_rest /usr/lib/python2.7/gnucash_rest
 
 # Expose apache.
 EXPOSE 80
