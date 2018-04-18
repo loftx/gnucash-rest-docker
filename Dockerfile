@@ -23,16 +23,19 @@ RUN git config --global user.email "unused@example.com"
 RUN git config --global user.name "Unused"
 RUN git clone https://github.com/Gnucash/gnucash.git
 
-# Checkout Gnucash 2.7.5
+# Checkout Gnucash 2.7.8
 WORKDIR /gnucash
-RUN git fetch origin 2.7.5
-RUN git checkout tags/2.7.5 
+RUN git fetch origin 2.7.8
+RUN git checkout tags/2.7.8
+
+# Testing - probably won't need the python dev one
+RUN apt-get install -y python3-dev
 
 # Build Gnucash with Python bindings
-RUN cmake -D WITH_AQBANKING=OFF -D WITH_OFX=OFF -D WITH_PYTHON=ON .
+RUN cmake -D WITH_AQBANKING=OFF -D WITH_OFX=OFF -D WITH_PYTHON=ON -D PYTHON_LIBRARY:FILEPATH=/usr/bin/python3 -D PYTHON_INCLUDE_DIR:PATH=/usr/include/python3.5m .
 RUN make
 
-# 'make install' is not run as the following error occurs if /gnucash isn't the working directory
+# 'make install' is not run as the following error occurs if /gnucash isn't the working directory (https://bugzilla.gnome.org/show_bug.cgi?id=794526)
 # WARN <gnc.engine> failed to load gncmod-backend-dbi from relative path dbi
 # CRIT <gnc.engine> required library gncmod-backend-dbi not found.
 # WARN <gnc.engine> failed to load gncmod-backend-xml from relative path xml
@@ -54,10 +57,10 @@ RUN chown wsgi:wsgi /home/wsgi
 ADD gnucash.gnucash /home/wsgi/gnucash.gnucash
 
 # Add link in main python directory so gnucash can be imported
-RUN ln -s /gnucash/lib/python2.7/dist-packages/gnucash /usr/lib/python2.7/gnucash
+RUN ln -s /gnucash/lib/python3/dist-packages/gnucash /usr/lib/python3.5/gnucash
 
 # Add link in main python directory so gnucash_rest can be imported 
-RUN ln -s /var/www/gnucash-rest/gnucash_rest /usr/lib/python2.7/gnucash_rest
+RUN ln -s /var/www/gnucash-rest/gnucash_rest /usr/lib/python3.5/gnucash_rest
 
 # Expose apache.
 EXPOSE 80
