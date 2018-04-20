@@ -13,7 +13,14 @@ export TZ="America/Los_Angeles"
 #elif [[ "$BUILDTYPE" == "cmake-ninja" ]]; then
     cmake ../gnucash -DWITH_PYTHON=ON -DCMAKE_BUILD_TYPE=debug -G Ninja $PLATFORM_CMAKE_OPTS
     ninja
-    ninja check || ../afterfailure;
+    
+    #ninja check || ../afterfailure;
+
+    ln -s /build/lib/python3/dist-packages/gnucash /usr/lib/python3/dist-packages/gnucash
+
+    cd /build
+    python3 -c 'import gnucash'
+
 #else
 #    echo "Unknown buildtype: \"$BUILDTYPE\". Not building."
 #fi

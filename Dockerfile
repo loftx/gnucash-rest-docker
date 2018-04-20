@@ -14,4 +14,4 @@ RUN git clone https://github.com/Gnucash/gnucash.git
 run apt-get install -qq python3-dev
 
 run chmod +x /ubuntu-14.04-testscript /afterfailure /commonbuild
-entrypoint /ubuntu-14.04-testscript
+run /ubuntu-14.04-testscript
