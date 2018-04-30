@@ -29,6 +29,22 @@ RUN ninja
     
 RUN ln -s /build/lib/python3/dist-packages/gnucash /usr/lib/python3/dist-packages/gnucash
 
-RUN python3 -c 'import gnucash'
+# New bits
+RUN apt-get install -y python3-pip apache2 libapache2-mod-wsgi 
+
+RUN pip3 install Flask
+
+WORKDIR /var/www
+RUN git clone https://github.com/loftx/gnucash-rest.git
+
+RUN ln -s /var/www/gnucash-rest/gnucash_rest/gnucash_simple.py /usr/lib/python3/dist-packages/gnucash_simple.py
+
+WORKDIR /build
+
+RUN apt-get install -y python3-mysqldb
+
+RUN python3 /var/www/gnucash-rest/tests.py RootTestCase.test_root
+
+#RUN python3 -c 'import gnucash'
 
 
