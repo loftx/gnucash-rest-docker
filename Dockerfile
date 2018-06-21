@@ -30,12 +30,11 @@ RUN echo mysql-server-5.7 mysql-server/root_password password oxford | debconf-s
 RUN echo mysql-server-5.7 mysql-server/root_password_again password oxford | debconf-set-selections
 
 RUN apt-get install -y python3-mysqldb python3-dev mysql-server 
+# we probably don't need python3-dev or libdbi-dev - try removing them and see what happens
 RUN apt-get install -y libdbi-dev libdbd-mysql
 
-RUN cmake ../gnucash -DWITH_PYTHON=ON -DCMAKE_BUILD_TYPE=debug -G Ninja -DALLOW_OLD_GETTEXT=ON
-RUN ninja
-    
-RUN ln -s /build/lib/python3/dist-packages/gnucash /usr/lib/python3/dist-packages/gnucash
+# Install MySQL server for tests
+RUN apt-get install -y mysql-server
 
 # New bits
 RUN apt-get install -y python3-pip apache2 libapache2-mod-wsgi
@@ -44,13 +43,19 @@ RUN pip3 install Flask
 WORKDIR /var/www
 RUN git clone https://github.com/loftx/gnucash-rest.git
 
+WORKDIR /gnucash
+
+ADD base-typemaps.i /gnucash/common/base-typemaps.i
+
+WORKDIR /build
+
+RUN cmake ../gnucash -DWITH_PYTHON=ON -DCMAKE_BUILD_TYPE=debug -G Ninja -DALLOW_OLD_GETTEXT=ON
+RUN ninja
+    
+RUN ln -s /build/lib/python3/dist-packages/gnucash /usr/lib/python3/dist-packages/gnucash
 RUN ln -s /var/www/gnucash-rest/gnucash_rest/gnucash_simple.py /usr/lib/python3/dist-packages/gnucash_simple.py
 
 WORKDIR /build
 
-# Install MySQL server for tests
-RUN apt-get install -y mysql-server 
-
-ADD tests.py /var/www/gnucash-rest/tests.py
-
-RUN service mysql start && python3 /var/www/gnucash-rest/tests.py SessionTestCase.test_session
+#ADD tests.py /var/www/gnucash-rest/tests.py
+#RUN service mysql start && python3 /var/www/gnucash-rest/tests.py BillsSessionTestCase
