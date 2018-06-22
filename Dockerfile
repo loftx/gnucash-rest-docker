@@ -12,6 +12,9 @@ RUN git clone https://github.com/Gnucash/gnucash.git
 
 run apt-get install -qq python3-dev
 
+WORKDIR /gnucash
+RUN git checkout maint
+
 ENV GTEST_ROOT /gtest/googletest
 ENV GMOCK_ROOT /gtest/googlemock
 
@@ -24,28 +27,9 @@ WORKDIR /build
 
 ENV TZ "America/Los_Angeles"
 
-# Set default MySQL root password for use as test database
-RUN apt-get install -y debconf-utils
-RUN echo mysql-server-5.7 mysql-server/root_password password oxford | debconf-set-selections
-RUN echo mysql-server-5.7 mysql-server/root_password_again password oxford | debconf-set-selections
-
-RUN apt-get install -y python3-mysqldb python3-dev mysql-server 
-# we probably don't need python3-dev or libdbi-dev - try removing them and see what happens
-RUN apt-get install -y libdbi-dev libdbd-mysql
-
-# Install MySQL server for tests
-RUN apt-get install -y mysql-server
-
-# New bits
-RUN apt-get install -y python3-pip apache2 libapache2-mod-wsgi
-RUN pip3 install Flask
-
-WORKDIR /var/www
-RUN git clone https://github.com/loftx/gnucash-rest.git
-
+# Refresh from cache...
 WORKDIR /gnucash
-
-ADD base-typemaps.i /gnucash/common/base-typemaps.i
+RUN git pull
 
 WORKDIR /build
 
@@ -53,9 +37,11 @@ RUN cmake ../gnucash -DWITH_PYTHON=ON -DCMAKE_BUILD_TYPE=debug -G Ninja -DALLOW_
 RUN ninja
     
 RUN ln -s /build/lib/python3/dist-packages/gnucash /usr/lib/python3/dist-packages/gnucash
-RUN ln -s /var/www/gnucash-rest/gnucash_rest/gnucash_simple.py /usr/lib/python3/dist-packages/gnucash_simple.py
 
-WORKDIR /build
+WORKDIR /
 
-#ADD tests.py /var/www/gnucash-rest/tests.py
-#RUN service mysql start && python3 /var/www/gnucash-rest/tests.py BillsSessionTestCase
+RUN echo "import gnucash" >> /test.py
+RUN echo "print('OK')" >> /test.py
+RUN echo "" >> /test.py
+
+RUN python3 /test.py
