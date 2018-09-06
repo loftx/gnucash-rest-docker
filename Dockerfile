@@ -45,17 +45,26 @@ RUN git clone https://github.com/loftx/gnucash-rest.git
 
 WORKDIR /gnucash
 
-ADD base-typemaps.i /gnucash/common/base-typemaps.i
+# Add patch for gint32
+ADD base-typemaps.i.add_gint32.patch /gnucash/base-typemaps.i.add_gint32.patch
+RUN git apply base-typemaps.i.add_gint32.patch
+
+# Patch for Python 3 need to be run in common directory
+#WORKDIR /gnucash/common
+
+# Add patch for Python 3
+#ADD base-typemaps.i.python3.patch /gnucash/common/base-typemaps.i.python3.patch
+ADD base-typemaps.i.python3.patch /gnucash/base-typemaps.i.python3.patch
+
+RUN git apply base-typemaps.i.python3.patch
 
 WORKDIR /build
 
 RUN cmake ../gnucash -DWITH_PYTHON=ON -DCMAKE_BUILD_TYPE=debug -G Ninja -DALLOW_OLD_GETTEXT=ON
 RUN ninja
+RUN ninja install
     
 RUN ln -s /build/lib/python3/dist-packages/gnucash /usr/lib/python3/dist-packages/gnucash
 RUN ln -s /var/www/gnucash-rest/gnucash_rest/gnucash_simple.py /usr/lib/python3/dist-packages/gnucash_simple.py
 
 WORKDIR /build
-
-#ADD tests.py /var/www/gnucash-rest/tests.py
-#RUN service mysql start && python3 /var/www/gnucash-rest/tests.py BillsSessionTestCase

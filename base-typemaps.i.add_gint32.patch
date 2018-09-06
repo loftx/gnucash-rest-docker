@@ -1,0 +1,13 @@
+diff --git a/common/base-typemaps.i b/common/base-typemaps.i
+index ddddb55..0a136d1 100644
+--- a/common/base-typemaps.i
++++ b/common/base-typemaps.i
+@@ -175,7 +175,7 @@ typedef char gchar;
+ %import "glib.h"
+ %include <stdint.i>
+
+-%apply int { gint };
++%apply int { gint, gint32 };
+ %apply unsigned int { guint };
+ %apply long { glong };
+ %apply int64_t { gint64 };
