@@ -49,15 +49,6 @@ WORKDIR /gnucash
 ADD base-typemaps.i.add_gint32.patch /gnucash/base-typemaps.i.add_gint32.patch
 RUN git apply base-typemaps.i.add_gint32.patch
 
-# Patch for Python 3 need to be run in common directory
-#WORKDIR /gnucash/common
-
-# Add patch for Python 3
-#ADD base-typemaps.i.python3.patch /gnucash/common/base-typemaps.i.python3.patch
-ADD base-typemaps.i.python3.patch /gnucash/base-typemaps.i.python3.patch
-
-RUN git apply base-typemaps.i.python3.patch
-
 WORKDIR /build
 
 RUN cmake ../gnucash -DWITH_PYTHON=ON -DCMAKE_BUILD_TYPE=debug -G Ninja -DALLOW_OLD_GETTEXT=ON
