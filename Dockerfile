@@ -17,7 +17,7 @@ RUN apt-get install -qq python3-dev
 RUN apt-get install -y mysql-server
 
 # Install Apache webserver and Flask middleware for 
-RUN apt-get install -y python3-pip apache2 libapache2-mod-wsgi
+RUN apt-get install -y python3-pip apache2 libapache2-mod-wsgi-py3
 RUN pip3 install Flask
 
 # Install Googletest for Gnucash build requirement
@@ -53,3 +53,22 @@ RUN git clone https://github.com/loftx/gnucash-rest.git
 
 # Set python path to  gnucash python install dir and gnucash_rest dir
 ENV PYTHONPATH /usr/local/lib/python3/dist-packages:/var/www/gnucash-rest/gnucash_rest
+
+# Set WSGI requirements 
+RUN useradd wsgi
+RUN mkdir /home/wsgi
+RUN chown wsgi:wsgi /home/wsgi
+
+# Add WSGI config to Apache config
+ADD 000-default.conf /etc/apache2/sites-available 
+
+# Add updated WSGI file
+ADD gnucash_rest.wsgi /var/www/gnucash-rest
+
+# Create test database
+ADD gnucash.gnucash /home/wsgi/gnucash.gnucash
+
+# Expose apache.
+EXPOSE 80
+
+CMD /usr/sbin/apache2ctl -D FOREGROUND
