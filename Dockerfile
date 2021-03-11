@@ -1,6 +1,10 @@
 FROM ubuntu:16.04
 MAINTAINER dev@loftx.co.uk
 
+# Avoid interactive prompts e.g. for tzdata
+ARG DEBIAN_FRONTEND=noninteractive
+# Resolve 'E: You must put some 'source' URIs in your sources.list' error
+RUN sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
 RUN apt-get update
 RUN apt-get build-dep -y gnucash
 RUN apt-get install -y libtool swig subversion libgnomeui-dev xsltproc python-pip dbus git apache2 libapache2-mod-wsgi python-dev
