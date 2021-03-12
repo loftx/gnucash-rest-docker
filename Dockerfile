@@ -8,16 +8,20 @@ RUN sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
 RUN apt-get update
 RUN apt-get build-dep -y gnucash
 RUN apt-get install -y libtool swig subversion libgnomeui-dev xsltproc python-pip dbus git apache2 libapache2-mod-wsgi python-dev
+RUN apt-get install -y cmake libwebkit2gtk-3.0-dev libgtk-3-dev  libboost-all-dev gettext libgtest-dev google-mock
+RUN pip install Flask
+
 # Avoid 'fatal: unable to auto-detect email address' error
 RUN git config --global user.email "unused@example.com"
 RUN git config --global user.name "Unused"
 RUN git clone https://github.com/Gnucash/gnucash.git
+
 WORKDIR /gnucash
-RUN git checkout maint
-RUN git cherry-pick c27bea603132b4b0d3ca82b324dcfe12b46814f9
-RUN pip install Flask
-RUN ./autogen.sh
-RUN ./configure --enable-python
+RUN git checkout tags/3.11
+
+RUN mkdir /build-gnucash
+WORKDIR /build-gnucash
+RUN cmake -DCMAKE_INSTALL_PREFIX=$HOME/opt  ../gnucash  
 RUN make
 RUN make install
 # Added LD_LIBRARY_PATH as was seeing errors relating to libgnc-qof.so.1
