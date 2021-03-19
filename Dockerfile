@@ -19,19 +19,19 @@ RUN git clone https://github.com/Gnucash/gnucash.git
 WORKDIR /gnucash
 RUN git checkout tags/3.11
 
-RUN mkdir /build-gnucash
-WORKDIR /build-gnucash
+#RUN mkdir /build-gnucash
+#WORKDIR /build-gnucash
 
-RUN cmake -DCMAKE_INSTALL_PREFIX=$HOME/opt -DWITH_PYTHON=ON ../gnucash  
+RUN cmake -DCMAKE_INSTALL_PREFIX=/gnucash -DWITH_PYTHON=ON /gnucash 
 RUN make
-RUN make install
+#RUN make install
 
 # Copy .so files over to lib directory
-RUN cp /root/opt/lib/* /lib/
-RUN cp /root/opt/lib/gnucash/* /lib/
+#RUN cp -R /root/opt/lib/* /lib/
+#RUN cp -R /root/opt/lib/gnucash/* /lib/
 
 # Copy python packages over to python directory
-RUN cp -r /root/opt/lib/python3.5/site-packages/* /usr/lib/python3/dist-packages/
+#RUN cp -r /root/opt/lib/python3.5/site-packages/* /usr/lib/python3/dist-packages/
 
 ADD gnucash.gnucash /gnucash.gnucash
 
@@ -51,8 +51,10 @@ RUN service apache2 restart
 # Expose apache.
 EXPOSE 80
 
-#RUN python3 -c 'import gnucash'
+WORKDIR /var/www/gnucash-rest
+
+#RUN python3 /var/www/gnucash-rest/tests.py
 
 # By default start up apache in the foreground, override with /bin/bash for interative.
 #CMD /usr/sbin/apache2ctl -D FOREGROUND
-CMD bash
+#CMD bash
