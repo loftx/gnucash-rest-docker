@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 MAINTAINER dev@loftx.co.uk
 
 # Avoid interactive prompts e.g. for tzdata
@@ -8,7 +8,9 @@ RUN sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
 RUN apt-get update
 RUN apt-get build-dep -y gnucash
 RUN apt-get install -y libtool swig subversion libgnomeui-dev xsltproc python3-pip dbus git apache2 libapache2-mod-wsgi-py3 python3-dev
-RUN apt-get install -y cmake libwebkit2gtk-3.0-dev libgtk-3-dev libboost-all-dev gettext libgtest-dev libdbd-mysql google-mock 	
+RUN apt-get install -y cmake libgtk-3-dev libboost-all-dev gettext libgtest-dev libdbd-mysql google-mock 	
+# from old 18.04
+RUN apt-get install -y git bash-completion cmake make swig xsltproc libdbd-sqlite3 texinfo ninja-build libboost-all-dev libwebkit2gtk-4.0-dev 
 RUN pip3 install Flask
 
 # Avoid 'fatal: unable to auto-detect email address' error
@@ -20,18 +22,22 @@ WORKDIR /gnucash
 RUN git checkout tags/3.11
 
 #RUN mkdir /build-gnucash
+
+RUN mkdir /gnucash-install
+
 #WORKDIR /build-gnucash
 
-RUN cmake -DCMAKE_INSTALL_PREFIX=/gnucash -DWITH_PYTHON=ON /gnucash 
-RUN make
-#RUN make install
+RUN cmake /gnucash -DWITH_PYTHON=ON -DCMAKE_BUILD_TYPE=debug -G Ninja -DALLOW_OLD_GETTEXT=ON -DWITH_AQBANKING=OFF -DWITH_OFX=OFF -DCMAKE_INSTALL_PREFIX=/gnucash-install
+WORKDIR /gnucash
+RUN ninja
+RUN ninja install
 
 # Copy .so files over to lib directory
 #RUN cp -R /root/opt/lib/* /lib/
 #RUN cp -R /root/opt/lib/gnucash/* /lib/
 
 # Copy python packages over to python directory
-#RUN cp -r /root/opt/lib/python3.5/site-packages/* /usr/lib/python3/dist-packages/
+RUN cp -r /gnucash-install/lib/python3.6/site-packages/* /usr/lib/python3/dist-packages/
 
 ADD gnucash.gnucash /gnucash.gnucash
 
@@ -53,8 +59,5 @@ EXPOSE 80
 
 WORKDIR /var/www/gnucash-rest
 
-#RUN python3 /var/www/gnucash-rest/tests.py
-
 # By default start up apache in the foreground, override with /bin/bash for interative.
-#CMD /usr/sbin/apache2ctl -D FOREGROUND
-#CMD bash
+CMD /usr/sbin/apache2ctl -D FOREGROUND
