@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 MAINTAINER dev@loftx.co.uk
 
 # Avoid interactive prompts e.g. for tzdata
@@ -7,7 +7,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN sed -Ei 's/^# deb-src /deb-src /' /etc/apt/sources.list
 RUN apt-get update
 RUN apt-get build-dep -y gnucash
-RUN apt-get install -y libtool swig subversion libgnomeui-dev xsltproc python3-pip dbus git apache2 libapache2-mod-wsgi-py3 python3-dev
+RUN apt-get install -y libtool swig subversion xsltproc python3-pip dbus git apache2 libapache2-mod-wsgi-py3 python3-dev
 RUN apt-get install -y cmake libgtk-3-dev libboost-all-dev gettext libgtest-dev libdbd-mysql google-mock 	
 # from old 18.04
 RUN apt-get install -y git bash-completion cmake make swig xsltproc libdbd-sqlite3 texinfo ninja-build libboost-all-dev libwebkit2gtk-4.0-dev 
@@ -19,13 +19,30 @@ RUN git config --global user.name "Unused"
 RUN git clone https://github.com/Gnucash/gnucash.git
 
 WORKDIR /gnucash
-RUN git checkout tags/3.11
+RUN git checkout tags/3.11 # latest in 3 branch
+
+###
+
+WORKDIR /
+RUN git clone https://github.com/google/googletest.git
+
+WORKDIR /googletest
+RUN mkdir build 
+WORKDIR /googletest/build
+RUN cmake .. -DBUILD_SHARED_LIBS=ON -DINSTALL_GTEST=ON -DCMAKE_INSTALL_PREFIX:PATH=/usr
+RUN make -j8
+RUN make install
+RUN ldconfig
+
+###
 
 #RUN mkdir /build-gnucash
 
 RUN mkdir /gnucash-install
 
 #WORKDIR /build-gnucash
+
+WORKDIR /gnucash
 
 RUN cmake /gnucash -DWITH_PYTHON=ON -DCMAKE_BUILD_TYPE=debug -G Ninja -DALLOW_OLD_GETTEXT=ON -DWITH_AQBANKING=OFF -DWITH_OFX=OFF -DCMAKE_INSTALL_PREFIX=/gnucash-install
 WORKDIR /gnucash
@@ -37,7 +54,7 @@ RUN ninja install
 #RUN cp -R /root/opt/lib/gnucash/* /lib/
 
 # Copy python packages over to python directory
-RUN cp -r /gnucash-install/lib/python3.6/site-packages/* /usr/lib/python3/dist-packages/
+RUN cp -r /gnucash-install/lib/python3.8/site-packages/* /usr/lib/python3/dist-packages/
 
 ADD gnucash.gnucash /gnucash.gnucash
 
