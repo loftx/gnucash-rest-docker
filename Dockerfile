@@ -12,7 +12,7 @@ RUN apt install -y cmake libgtk-3-dev libboost-all-dev gettext libgtest-dev libd
 RUN apt install -y git bash-completion cmake make swig xsltproc libdbd-sqlite3 texinfo ninja-build libboost-all-dev guile-2.2-dev python3-flask
 
 # needed for testing
-RUN apt install python3-mysqldb libmysqlclient-dev
+RUN apt install -y python3-mysqldb libmysqlclient-dev
 
 # Avoid 'fatal: unable to auto-detect email address' error
 RUN git config --global user.email "unused@example.com"
